@@ -11,7 +11,7 @@ import SwiftUI
 struct VideoPlayerChallengeApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            VideoPlayerView()
         }
     }
 }
