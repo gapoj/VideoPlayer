@@ -7,28 +7,31 @@
 
 import SwiftUI
 import AVKit
+import CoreLocationUI
 
 struct VideoPlayerView: View {
-    let url = URL(string: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4")
+    @ObservedObject var viewModel: VideoPlayerViewModel
+    
+    public init(url: String) {
+        self.viewModel = VideoPlayerViewModel(url: url)
+    }
+    
     var body: some View {
         VStack {
-            if let url {
-                let videoplayer = AVPlayer(url:url)
-                VideoPlayer(player: videoplayer ).onAppear {
-                    locationManager.requestLocation()
-                    videoplayer.play()
+            VideoPlayer(player: viewModel.player)
+                .onAppear {
+                    viewModel.onAppear()
                 }.onDisappear {
-                    videoplayer.pause()
-                }.onShake { // pause on shake as required
-                    videoplayer.pause()
+                    viewModel.onDisappear()
+                }.onShake {
+                    viewModel.onShake()
                 }
-            }
         }
     }
 }
 
 #Preview {
-    VideoPlayerView()
+    VideoPlayerView(url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4")
 }
 // The notification we'll send when a shake gesture happens.
 extension UIDevice {
@@ -37,17 +40,17 @@ extension UIDevice {
 
 //  Override the default behavior of shake gestures to send our notification instead.
 extension UIWindow {
-     open override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
+    open override func motionEnded(_ motion: UIEvent.EventSubtype, with event: UIEvent?) {
         if motion == .motionShake {
             NotificationCenter.default.post(name: UIDevice.deviceDidShakeNotification, object: nil)
         }
-     }
+    }
 }
 
 // A view modifier that detects shaking and calls a function of our choosing.
 struct DeviceShakeViewModifier: ViewModifier {
     let action: () -> Void
-
+    
     func body(content: Content) -> some View {
         content
             .onAppear()
