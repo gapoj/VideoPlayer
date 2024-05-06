@@ -56,12 +56,10 @@ final class VideoPlayerViewModel: NSObject, ObservableObject {
     }
     
     func startMotionTracking() {
-        
+        print(#function)
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = .motionUpdate // updates 3 times a second to avoid over update
-            motionManager.startDeviceMotionUpdates(
-                using: .xArbitraryZVertical,
-                to: queue
+            motionManager.startDeviceMotionUpdates(to: queue
             ) {// this include the gyroscope and also the accelerometer so I think is better
                 [weak self] (data, error) in
                 
@@ -83,39 +81,49 @@ final class VideoPlayerViewModel: NSObject, ObservableObject {
     
     // MARK: - View Events
     func onAppear() {
+        print(#function)
         checkLocationAuthorization()
         player.play()
         startMotionTracking()
     }
     func onDisappear() {
+        print(#function)
         player.pause()
         motionManager.stopDeviceMotionUpdates()
         locationManager.stopUpdatingLocation()
     }
     // I could do play or pause depending on the current status but the PDF saids "A shake of the device should pause the video." so ....
     func onShake() {
+        print(#function)
         player.pause()
     }
     
     // MARK: - Video controls
     func restartVideo() {
+        print(#function)
         initialAttitude = nil // restarting all including the reference attitude
         player.pause()
         player.seek(to: .zero)
         player.play()
     }
     func decreaseVolume() {
-        player.volume = max(self.player.volume - .volumeStep, .minVolume)
+        let newVol = self.player.volume - .volumeStep
+        print(#function, newVol)
+        player.volume = max(newVol, .minVolume)
     }
     func increaseVolume() {
-        player.volume = min(self.player.volume + .volumeStep, .maxVolume)
+        let newVol = self.player.volume + .volumeStep
+        print(#function, newVol)
+        player.volume = min(newVol, .maxVolume)
     }
     func seekForward() {
+        
         guard let duration = player.currentItem?.duration else { return }
         let currentTime = player.currentTime()
         let newTime = CMTimeAdd(currentTime,
                                 CMTime(seconds: .timeStep, preferredTimescale: currentTime.timescale))
-        player.seek(to: max(duration, newTime),
+        print(#function, newTime)
+        player.seek(to: min(duration, newTime),
                     toleranceBefore: CMTime.zero,
                     toleranceAfter: CMTime.zero)
     }
