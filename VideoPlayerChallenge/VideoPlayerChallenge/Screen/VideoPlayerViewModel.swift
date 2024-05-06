@@ -8,76 +8,174 @@
 import Foundation
 import AVKit
 import CoreLocation
+import CoreMotion
 
+private extension Double {
+    static let distanceThreshold: Double = 10
+    static let timeStep: Double = 3 // could be more but the video is no so long so
+    static let motionUpdate: Double = 1
+    static let minAngleThreshold: Double =  0.0872664626 // aprox 5 degrees
+}
+private extension Float {
+    static let maxVolume: Float = 1
+    static let minVolume: Float = 0
+    static let volumeStep: Float = 0.01
+}
 final class VideoPlayerViewModel: NSObject, ObservableObject {
     
+    // MARK: - Variables
     @Published var player: AVPlayer  = AVPlayer()
     var locationManager = CLLocationManager()
     var lastlocation: CLLocation?
+    var motionManager = CMMotionManager()
+    var initialAttitude: CMAttitude?
+    let queue = OperationQueue()
     
+    
+    // MARK: - Initializers
     public init(url: String) {
         if let videoURL = URL(string: url) {
-            player = AVPlayer(url: videoURL)
+            player = AVPlayer(url: videoURL)// video could be downloaded to local disk but I am avoiding the use of the disk
         }
     }
+    // MARK: - Motion Tracking
+    func updateVolume(for angle: Double) {
+        if abs(angle) > .minAngleThreshold {
+            if angle < 0 {
+                increaseVolume()
+            } else {
+                decreaseVolume()
+            }
+        }
+    }
+    func updateTime(for angle: Double) {
+        guard abs(angle) > .minAngleThreshold else { return }
+        if angle < 0 {
+            seekForward()
+        } else {
+            seekBackward()
+        }
+    }
+    
+    func startMotionTracking() {
+        
+        if motionManager.isDeviceMotionAvailable {
+            motionManager.deviceMotionUpdateInterval = .motionUpdate // updates 3 times a second to avoid over update
+            motionManager.startDeviceMotionUpdates(
+                using: .xArbitraryZVertical,
+                to: queue
+            ) {// this include the gyroscope and also the accelerometer so I think is better
+                [weak self] (data, error) in
+                
+                guard let self, let data, error == nil else {
+                    return
+                }
+                guard let initialAttitude else {
+                    // the initialAttitude is nil so I initialize it to compare later
+                    self.initialAttitude = data.attitude
+                    return
+                }
+                // translate the attitude, to make it in comparation to the initial value so we have a reference, the function doesn't return so the data is modified there
+                data.attitude.multiply(byInverseOf: initialAttitude)
+                updateTime(for: data.attitude.yaw)
+                updateVolume(for: data.attitude.pitch)
+            }
+        }
+    }
+    
+    // MARK: - View Events
     func onAppear() {
         checkLocationAuthorization()
         player.play()
+        startMotionTracking()
     }
     func onDisappear() {
         player.pause()
+        motionManager.stopDeviceMotionUpdates()
+        locationManager.stopUpdatingLocation()
     }
+    // I could do play or pause depending on the current status but the PDF saids "A shake of the device should pause the video." so ....
     func onShake() {
         player.pause()
     }
+    
+    // MARK: - Video controls
     func restartVideo() {
+        initialAttitude = nil // restarting all including the reference attitude
+        player.pause()
         player.seek(to: .zero)
+        player.play()
     }
+    func decreaseVolume() {
+        player.volume = max(self.player.volume - .volumeStep, .minVolume)
+    }
+    func increaseVolume() {
+        player.volume = min(self.player.volume + .volumeStep, .maxVolume)
+    }
+    func seekForward() {
+        guard let duration = player.currentItem?.duration else { return }
+        let currentTime = player.currentTime()
+        let newTime = CMTimeAdd(currentTime,
+                                CMTime(seconds: .timeStep, preferredTimescale: currentTime.timescale))
+        player.seek(to: max(duration, newTime),
+                    toleranceBefore: CMTime.zero,
+                    toleranceAfter: CMTime.zero)
+    }
+    
+    func seekBackward() {
+        let currentTime = player.currentTime()
+        let newTime = CMTimeSubtract(currentTime, CMTime(seconds: .timeStep, preferredTimescale: currentTime.timescale))
+        print(#function, newTime)
+        player.seek(to: max(newTime, CMTime.zero),
+                    toleranceBefore: CMTime.zero,
+                    toleranceAfter: CMTime.zero)
+    }
+}
+// MARK: - CLLocationManagerDelegate
+extension VideoPlayerViewModel: CLLocationManagerDelegate {
     func checkLocationAuthorization() {
         
         locationManager.delegate = self
         locationManager.startUpdatingLocation()
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.distanceFilter = 10
+        locationManager.distanceFilter = .distanceThreshold // distance Filter is useful to reduce the usage but is not 100% reliable so I double check on didUpdate
         
         switch locationManager.authorizationStatus {
         case .notDetermined://The user choose allow or denny your app to get the location yet
             locationManager.requestWhenInUseAuthorization()
             
         case .restricted://The user cannot change this app’s status, possibly due to active restrictions such as parental controls being in place.
-            print("Location restricted")
+            print(#function,"Location restricted")
             
         case .denied://The user dennied your app to get location or disabled the services location or the phone is in airplane mode
-            print("Location denied")
+            print(#function,"Location denied")
             
         case .authorizedAlways://This authorization allows you to use all location services and receive location events whether or not your app is in use.
-            print("Location authorizedAlways")
+            print(#function,"Location authorizedAlways")
             
         case .authorizedWhenInUse://This authorization allows you to use all location services and receive location events only when your app is in use
-            print("Location authorized when in use")
+            print(#function,"Location authorized when in use")
             lastlocation = locationManager.location
             
         @unknown default:
-            print("Location service disabled")
+            print(#function,"Location service disabled")
             
         }
     }
-}
-extension VideoPlayerViewModel: CLLocationManagerDelegate {
-    
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {//Trigged every time authorization status changes
         checkLocationAuthorization()
     }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let lastlocation,
-           let current = locations.first,
-           lastlocation.distance(from: current).magnitude > 10 {
+           let current = locations.last, // in case there is more than one I use the last guided by apple documentation
+           lastlocation.distance(from: current).magnitude >= .distanceThreshold { // distance Filter is not 100% reliable so I double check here
             self.lastlocation = current
             restartVideo()
         }
     }
     func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
+        // in a real world up we should do something with this at least log it
         print(#function, error)
     }
 }

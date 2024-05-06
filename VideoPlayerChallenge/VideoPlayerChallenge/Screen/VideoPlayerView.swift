@@ -7,7 +7,6 @@
 
 import SwiftUI
 import AVKit
-import CoreLocationUI
 
 struct VideoPlayerView: View {
     @ObservedObject var viewModel: VideoPlayerViewModel
