@@ -11,12 +11,12 @@ import AVKit
 struct VideoPlayerView: View {
     @ObservedObject var viewModel: VideoPlayerViewModel
     
-    public init(url: String) {
-        self.viewModel = VideoPlayerViewModel(url: url)
+    public init() {
+        self.viewModel = VideoPlayerViewModel()
     }
     
     var body: some View {
-        VStack {
+        ZStack {
             VideoPlayer(player: viewModel.player)
                 .task { // loading video and starting on background to avoid blocking mainthread
                     viewModel.setup()
@@ -25,10 +25,15 @@ struct VideoPlayerView: View {
                 }.onShake {
                     viewModel.onShake()
                 }
+            if viewModel.showLoader {
+                ProgressView("Loading...").tint(.white)
+                    .foregroundColor(.white)
+                    .scaleEffect(3)
+            }
         }
     }
 }
 
 #Preview {
-    VideoPlayerView(url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4")
+    VideoPlayerView()
 }

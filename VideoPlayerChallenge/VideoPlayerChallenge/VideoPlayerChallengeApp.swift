@@ -11,7 +11,7 @@ import SwiftUI
 struct VideoPlayerChallengeApp: App {
     var body: some Scene {
         WindowGroup {
-            VideoPlayerView(url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4")
+            VideoPlayerView().ignoresSafeArea() // player takes all the screen
         }
     }
 }

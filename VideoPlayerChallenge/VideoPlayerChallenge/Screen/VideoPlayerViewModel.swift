@@ -8,6 +8,7 @@
 import Foundation
 import AVKit
 import CoreMotion
+import Combine
 
 private extension Double {
     static let timeStep: Double = 3 // could be more but the video is no so long so
@@ -23,15 +24,21 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
     let decreseRange = 0.50...3.14
     // MARK: - Variables
     @Published var player: AVPlayer?
+    @Published var showLoader: Bool = true
     var locationManager = CLLocationManager()
     var lastlocation: CLLocation?
     var motionManager = CMMotionManager()
     let queue = OperationQueue()
-    let url: String
+    let url: String = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4"
+    private var cancellable: AnyCancellable?
     
     // MARK: - Initializers
-    public init(url: String) {
-        self.url = url
+    override public init() {
+        super.init()
+        checkLocationAuthorization() // so it shows the authorization when is loading
+    }
+    deinit {
+        
     }
     // MARK: - Motion Tracking
     
@@ -76,17 +83,31 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
     func setup() {
         if let videoURL = URL(string: url) {
             player = AVPlayer(url: videoURL)// video could be downloaded to local disk but I am avoiding the use of the disk
+            cancellable = player?.publisher(for: \.currentItem?.status)
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] status in
+                    switch status {
+                    case .readyToPlay:
+                        self?.showLoader = false
+                        self?.cancellable = nil // take out the loader no need to keep listening
+                    default:
+                        break
+                    }
+                }
             player?.play()
+            startMotionTracking()
         }
-        checkLocationAuthorization()
-        startMotionTracking()
     }
-    func onDisappear() {
-        player?.pause()
+    func stopManagers() {
         if motionManager.isDeviceMotionAvailable {
             motionManager.stopDeviceMotionUpdates()
         }
         locationManager.stopUpdatingLocation()
+    }
+    
+    func onDisappear() {
+        player?.pause()
+        stopManagers()
     }
     // I could do play or pause depending on the current status but the PDF saids "A shake of the device should pause the video." so ....
     func onShake() {
