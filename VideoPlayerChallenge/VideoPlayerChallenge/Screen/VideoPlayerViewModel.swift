@@ -38,7 +38,8 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
         checkLocationAuthorization() // so it shows the authorization when is loading
     }
     deinit {
-        
+        stopManagers()
+        cancellable = nil
     }
     // MARK: - Motion Tracking
     
@@ -86,15 +87,17 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
             cancellable = player?.publisher(for: \.currentItem?.status)
                 .receive(on: DispatchQueue.main)
                 .sink { [weak self] status in
+                    guard let self else { return }
                     switch status {
                     case .readyToPlay:
-                        self?.showLoader = false
-                        self?.cancellable = nil // take out the loader no need to keep listening
+                        showLoader = false
+                        player?.play()
+                        cancellable = nil // take out the loader no need to keep listening
                     default:
                         break
                     }
                 }
-            player?.play()
+            
             startMotionTracking()
         }
     }
