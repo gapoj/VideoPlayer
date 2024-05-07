@@ -11,127 +11,117 @@ import CoreMotion
 
 private extension Double {
     static let timeStep: Double = 3 // could be more but the video is no so long so
-    static let motionUpdate: Double = 1
-    static let minAngleThreshold: Double =  0.0872664626 // aprox 5 degrees
+    static let motionUpdate: Double = 0.25 // updates 4 times a second to avoid over update
 }
 private extension Float {
     static let maxVolume: Float = 1
     static let minVolume: Float = 0
-    static let volumeStep: Float = 0.01
+    static let volumeStep: Float = 0.1
 }
-final class VideoPlayerViewModel: NSObject, ObservableObject {
-    
+final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoaderDelegate {
+    let increaseRange = 3.14...5.78
+    let decreseRange = 0.50...3.14
     // MARK: - Variables
-    @Published var player: AVPlayer  = AVPlayer()
+    @Published var player: AVPlayer?
     var locationManager = CLLocationManager()
     var lastlocation: CLLocation?
     var motionManager = CMMotionManager()
-    var initialAttitude: CMAttitude?
     let queue = OperationQueue()
-    
+    let url: String
     
     // MARK: - Initializers
     public init(url: String) {
-        if let videoURL = URL(string: url) {
-            player = AVPlayer(url: videoURL)// video could be downloaded to local disk but I am avoiding the use of the disk
-        }
+        self.url = url
     }
     // MARK: - Motion Tracking
-    func updateVolume(for angle: Double) {
-        if abs(angle) > .minAngleThreshold {
-            if angle < 0 {
-                increaseVolume()
-            } else {
-                decreaseVolume()
-            }
+    
+    
+    func updateTime(_ rotation: Double) {
+        if decreseRange.contains(rotation) {
+            seekBackward()
+        } else if increaseRange.contains(rotation) {
+            seekForward()
         }
     }
-    func updateTime(for angle: Double) {
-        guard abs(angle) > .minAngleThreshold else { return }
-        if angle < 0 {
-            seekForward()
-        } else {
-            seekBackward()
+    
+    func updateVolume(_ rotation: Double) {
+        if decreseRange.contains(rotation) {
+            decreaseVolume()
+        } else if increaseRange.contains(rotation) {
+            increaseVolume()
         }
     }
     
     func startMotionTracking() {
-        print(#function)
         if motionManager.isDeviceMotionAvailable {
-            motionManager.deviceMotionUpdateInterval = .motionUpdate // updates 3 times a second to avoid over update
-            motionManager.startDeviceMotionUpdates(to: queue
+            motionManager.deviceMotionUpdateInterval = .motionUpdate
+            motionManager.startDeviceMotionUpdates(to: .main
             ) {// this include the gyroscope and also the accelerometer so I think is better
                 [weak self] (data, error) in
                 
                 guard let self, let data, error == nil else {
                     return
                 }
-                guard let initialAttitude else {
-                    // the initialAttitude is nil so I initialize it to compare later
-                    self.initialAttitude = data.attitude
-                    return
-                }
-                // translate the attitude, to make it in comparation to the initial value so we have a reference, the function doesn't return so the data is modified there
-                data.attitude.multiply(byInverseOf: initialAttitude)
-                updateTime(for: data.attitude.yaw)
-                updateVolume(for: data.attitude.pitch)
+                //rotation along the z-axis controls the current time
+                let rotationOnZ = atan2(data.gravity.x, data.gravity.y) + Double.pi
+                // rotation along the x-axis should control the volume of the sound.
+                let rotationOnX = atan2(data.gravity.z, data.gravity.y) + Double.pi
+                updateTime(rotationOnZ)
+                updateVolume(rotationOnX)
             }
         }
     }
     
     // MARK: - View Events
-    func onAppear() {
-        print(#function)
+    func setup() {
+        if let videoURL = URL(string: url) {
+            player = AVPlayer(url: videoURL)// video could be downloaded to local disk but I am avoiding the use of the disk
+            player?.play()
+        }
         checkLocationAuthorization()
-        player.play()
         startMotionTracking()
     }
     func onDisappear() {
-        print(#function)
-        player.pause()
-        motionManager.stopDeviceMotionUpdates()
+        player?.pause()
+        if motionManager.isDeviceMotionAvailable {
+            motionManager.stopDeviceMotionUpdates()
+        }
         locationManager.stopUpdatingLocation()
     }
     // I could do play or pause depending on the current status but the PDF saids "A shake of the device should pause the video." so ....
     func onShake() {
-        print(#function)
-        player.pause()
+        player?.pause()
     }
     
     // MARK: - Video controls
     func restartVideo() {
-        print(#function)
-        initialAttitude = nil // restarting all including the reference attitude
-        player.pause()
-        player.seek(to: .zero)
-        player.play()
+        player?.seek(to: .zero)
     }
     func decreaseVolume() {
-        let newVol = self.player.volume - .volumeStep
-        print(#function, newVol)
-        player.volume = max(newVol, .minVolume)
+        guard let player else { return }
+        player.volume = max(player.volume - .volumeStep, .minVolume)
     }
     func increaseVolume() {
-        let newVol = self.player.volume + .volumeStep
-        print(#function, newVol)
-        player.volume = min(newVol, .maxVolume)
+        guard let player else { return }
+        player.volume = min(player.volume + .volumeStep, .maxVolume)
     }
     func seekForward() {
         
-        guard let duration = player.currentItem?.duration else { return }
+        guard let player, let duration = player.currentItem?.duration else { return }
         let currentTime = player.currentTime()
         let newTime = CMTimeAdd(currentTime,
-                                CMTime(seconds: .timeStep, preferredTimescale: currentTime.timescale))
-        print(#function, newTime)
+                                CMTime(seconds: .timeStep, 
+                                       preferredTimescale: currentTime.timescale))
         player.seek(to: min(duration, newTime),
                     toleranceBefore: CMTime.zero,
                     toleranceAfter: CMTime.zero)
     }
     
     func seekBackward() {
+        guard let player else { return }
         let currentTime = player.currentTime()
-        let newTime = CMTimeSubtract(currentTime, CMTime(seconds: .timeStep, preferredTimescale: currentTime.timescale))
-        print(#function, newTime)
+        let newTime = CMTimeSubtract(currentTime, CMTime(seconds: .timeStep,
+                                                         preferredTimescale: currentTime.timescale))
         player.seek(to: max(newTime, CMTime.zero),
                     toleranceBefore: CMTime.zero,
                     toleranceAfter: CMTime.zero)

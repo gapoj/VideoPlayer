@@ -18,8 +18,8 @@ struct VideoPlayerView: View {
     var body: some View {
         VStack {
             VideoPlayer(player: viewModel.player)
-                .onAppear {
-                    viewModel.onAppear()
+                .task { // loading video and starting on background to avoid blocking mainthread
+                    viewModel.setup()
                 }.onDisappear {
                     viewModel.onDisappear()
                 }.onShake {

@@ -19,23 +19,16 @@ extension VideoPlayerViewModel: CLLocationManagerDelegate {
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.distanceFilter = .distanceThreshold // distance Filter is useful to reduce the usage but is not 100% reliable so I double check on didUpdate
         
-        switch locationManager.authorizationStatus {
+        switch locationManager.authorizationStatus { // separating restricted from denied to try them as a different case but is out of the scope of the excersice
         case .notDetermined://The user choose allow or denny your app to get the location yet
             locationManager.requestWhenInUseAuthorization()
             
         case .restricted://The user cannot change this app’s status, possibly due to active restrictions such as parental controls being in place.
             print(#function,"Location restricted")
-            
-        case .denied://The user dennied your app to get location or disabled the services location or the phone is in airplane mode
+        case .denied://The user dennied your app to get location or disabled the services location or the phone is in airplane mode, may do something to send it to change the configurastion but I think is out of the scope of the exercise
             print(#function,"Location denied")
-            
-        case .authorizedAlways://This authorization allows you to use all location services and receive location events whether or not your app is in use.
-            print(#function,"Location authorizedAlways")
-            
-        case .authorizedWhenInUse://This authorization allows you to use all location services and receive location events only when your app is in use
-            print(#function,"Location authorized when in use")
+        case .authorizedAlways, .authorizedWhenInUse:
             lastlocation = locationManager.location
-            
         @unknown default:
             print(#function,"Location service disabled")
             
