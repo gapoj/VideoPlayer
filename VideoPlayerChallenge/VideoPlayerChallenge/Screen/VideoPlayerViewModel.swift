@@ -18,7 +18,7 @@ private extension Double {
 private extension Float {
     static let maxVolume: Float = 1
     static let minVolume: Float = 0
-    static let volumeStep: Float = 0.20 // could be more gradual but for the sake of the excersice we have 5 volume stages, change this if you want a more gradual change of volume
+    static let volumeStep: Float = 0.25 // could be more gradual but for the sake of the excersice we have 4 volume stages, change this if you want a more gradual change of volume
 }
 
 final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoaderDelegate {
@@ -82,6 +82,7 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
     
     // MARK: - View Events
     func setup() {
+        guard player == nil else { return } // extra defensive code just in case
         if let videoURL = URL(string: url) {
             player = AVPlayer(url: videoURL)// video could be downloaded to local disk but I am avoiding the use of the disk
             cancellable = player?.publisher(for: \.currentItem?.status)
