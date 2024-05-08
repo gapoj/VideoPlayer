@@ -10,7 +10,7 @@ import CoreLocation
 private extension Double {
     static let distanceThreshold: Double = 10
 }
-// CLLocationManagerDelegate
+// CLLocationManagerDelegate, for readability of the code I separated this extension in a different file
 extension VideoPlayerViewModel: CLLocationManagerDelegate {
     func checkLocationAuthorization() {
         
@@ -28,6 +28,7 @@ extension VideoPlayerViewModel: CLLocationManagerDelegate {
         case .denied://The user dennied your app to get location or disabled the services location or the phone is in airplane mode, may do something to send it to change the configurastion but I think is out of the scope of the exercise
             print(#function,"Location denied")
         case .authorizedAlways, .authorizedWhenInUse:
+            print(#function,"Authorized")
             lastlocation = locationManager.location
         @unknown default:
             print(#function,"Location service disabled")

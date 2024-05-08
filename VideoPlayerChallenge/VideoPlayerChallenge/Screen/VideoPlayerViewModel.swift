@@ -42,8 +42,6 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
         cancellable = nil
     }
     // MARK: - Motion Tracking
-    
-    
     func updateTime(_ rotation: Double) {
         if decreseRange.contains(rotation) {
             seekBackward()

@@ -63,7 +63,7 @@
 		25689D2A2BE4503F00FDBF21 /* VideoPlayerChallenge */ = {
 			isa = PBXGroup;
 			children = (
-				25689D442BE888D700FDBF21 /* Aux */,
+				25689D442BE888D700FDBF21 /* Extensions */,
 				25689D2B2BE4503F00FDBF21 /* VideoPlayerChallengeApp.swift */,
 				25689D412BE6B44E00FDBF21 /* Screen */,
 				25689D2F2BE4504000FDBF21 /* Assets.xcassets */,
@@ -90,7 +90,7 @@
 			path = Screen;
 			sourceTree = "<group>";
 		};
-		25689D442BE888D700FDBF21 /* Aux */ = {
+		25689D442BE888D700FDBF21 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
 				25689D462BE8891B00FDBF21 /* VIew+Extension.swift */,
@@ -98,7 +98,7 @@
 				25689D4A2BE88A2D00FDBF21 /* UIWindow+Extension.swift */,
 				25689D4D2BE88AEA00FDBF21 /* UIDevice+Extension.swift */,
 			);
-			path = Aux;
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
