@@ -12,12 +12,12 @@ import Combine
 
 private extension Double {
     static let timeStep: Double = 3 // could be more but the video is no so long so
-    static let motionUpdate: Double = 0.25 // updates 4 times a second to avoid over update
+    static let motionUpdate: Double = 0.20 // updates 5 times a second to avoid over update
 }
 private extension Float {
     static let maxVolume: Float = 1
     static let minVolume: Float = 0
-    static let volumeStep: Float = 0.1
+    static let volumeStep: Float = 0.25 // could be more gradual but for the sake of the excersice we have 4 volume stages, change this if you want a more gradual change of volume
 }
 final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoaderDelegate {
     let increaseRange = 3.14...5.78
@@ -89,13 +89,13 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
                     switch status {
                     case .readyToPlay:
                         showLoader = false
-                        player?.play()
                         cancellable = nil // take out the loader no need to keep listening
                     default:
                         break
                     }
                 }
-            
+            player?.volume = .maxVolume
+            player?.play()
             startMotionTracking()
         }
     }
