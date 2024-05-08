@@ -9,6 +9,7 @@ import Foundation
 import AVKit
 import CoreMotion
 import Combine
+import MediaPlayer
 
 private extension Double {
     static let timeStep: Double = 3 // could be more but the video is no so long so
@@ -17,8 +18,9 @@ private extension Double {
 private extension Float {
     static let maxVolume: Float = 1
     static let minVolume: Float = 0
-    static let volumeStep: Float = 0.25 // could be more gradual but for the sake of the excersice we have 4 volume stages, change this if you want a more gradual change of volume
+    static let volumeStep: Float = 0.20 // could be more gradual but for the sake of the excersice we have 5 volume stages, change this if you want a more gradual change of volume
 }
+
 final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoaderDelegate {
     let increaseRange = 3.14...5.78
     let decreseRange = 0.50...3.14
@@ -95,6 +97,7 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
                     }
                 }
             player?.volume = .maxVolume
+            MPVolumeView.setVolume(.maxVolume)
             player?.play()
             startMotionTracking()
         }
@@ -120,12 +123,10 @@ final class VideoPlayerViewModel: NSObject, ObservableObject, AVAssetResourceLoa
         player?.seek(to: .zero)
     }
     func decreaseVolume() {
-        guard let player else { return }
-        player.volume = max(player.volume - .volumeStep, .minVolume)
+        MPVolumeView.setVolume(max(AVAudioSession.sharedInstance().outputVolume - .volumeStep, .minVolume))
     }
     func increaseVolume() {
-        guard let player else { return }
-        player.volume = min(player.volume + .volumeStep, .maxVolume)
+        MPVolumeView.setVolume(min(AVAudioSession.sharedInstance().outputVolume + .volumeStep, .maxVolume))
     }
     func seekForward() {
         

@@ -17,6 +17,7 @@
 		25689D4B2BE88A2D00FDBF21 /* UIWindow+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25689D4A2BE88A2D00FDBF21 /* UIWindow+Extension.swift */; };
 		25689D4E2BE88AEA00FDBF21 /* UIDevice+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25689D4D2BE88AEA00FDBF21 /* UIDevice+Extension.swift */; };
 		25689D502BE88B8D00FDBF21 /* VideoPlayerViewModel+CoreLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25689D4F2BE88B8D00FDBF21 /* VideoPlayerViewModel+CoreLocation.swift */; };
+		25BE022A2BEBD34A00624E50 /* MPVolumeView+extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25BE02292BEBD34A00624E50 /* MPVolumeView+extension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		25689D4A2BE88A2D00FDBF21 /* UIWindow+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIWindow+Extension.swift"; sourceTree = "<group>"; };
 		25689D4D2BE88AEA00FDBF21 /* UIDevice+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+Extension.swift"; sourceTree = "<group>"; };
 		25689D4F2BE88B8D00FDBF21 /* VideoPlayerViewModel+CoreLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VideoPlayerViewModel+CoreLocation.swift"; sourceTree = "<group>"; };
+		25BE02292BEBD34A00624E50 /* MPVolumeView+extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MPVolumeView+extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -97,6 +99,7 @@
 				25689D482BE8897500FDBF21 /* DeviceShakeViewModifier.swift */,
 				25689D4A2BE88A2D00FDBF21 /* UIWindow+Extension.swift */,
 				25689D4D2BE88AEA00FDBF21 /* UIDevice+Extension.swift */,
+				25BE02292BEBD34A00624E50 /* MPVolumeView+extension.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -174,6 +177,7 @@
 				25689D2C2BE4503F00FDBF21 /* VideoPlayerChallengeApp.swift in Sources */,
 				25689D4E2BE88AEA00FDBF21 /* UIDevice+Extension.swift in Sources */,
 				25689D432BE6B49100FDBF21 /* VideoPlayerViewModel.swift in Sources */,
+				25BE022A2BEBD34A00624E50 /* MPVolumeView+extension.swift in Sources */,
 				25689D492BE8897500FDBF21 /* DeviceShakeViewModifier.swift in Sources */,
 				25689D472BE8891B00FDBF21 /* VIew+Extension.swift in Sources */,
 				25689D3A2BE4554100FDBF21 /* VideoPlayerView.swift in Sources */,
